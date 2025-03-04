@@ -116,4 +116,90 @@ describe('useTextWithCursor functionality', () => {
 
     expect(result).toBe('Hello');
   });
+
+  // Additional tests for robustness
+
+  test('backspace on empty string remains unchanged', () => {
+    const initialText = '';
+    const cursorPos = 0;
+    const result = textOperations.backspace(initialText, cursorPos);
+    expect(result.text).toBe('');
+    expect(result.cursorPos).toBe(0);
+  });
+
+  test('deleteChar on empty string remains unchanged', () => {
+    const initialText = '';
+    const cursorPos = 0;
+    const result = textOperations.deleteChar(initialText, cursorPos);
+    expect(result.text).toBe('');
+    expect(result.cursorPos).toBe(0);
+  });
+
+  test('insert text with emoji characters updates correctly', () => {
+    const initialText = 'Hello';
+    const initialCursorPos = 5;
+    const emoji = '😊';
+    const result = textOperations.insertText(
+      initialText,
+      initialCursorPos,
+      emoji
+    );
+    expect(result.text).toBe('Hello' + emoji);
+    expect(result.cursorPos).toBe(5 + emoji.length);
+  });
+
+  test('sequential operations: insert then backspace returns original text', () => {
+    const initialText = 'Test';
+    const initialCursorPos = 2;
+    // Insert a character
+    const inserted = textOperations.insertText(
+      initialText,
+      initialCursorPos,
+      'X'
+    );
+    // Then backspace at the new cursor position
+    const result = textOperations.backspace(inserted.text, inserted.cursorPos);
+    // Expect to return to original text
+    expect(result.text).toBe(initialText);
+    expect(result.cursorPos).toBe(initialCursorPos);
+  });
+
+  test('deleteToLineEnd with multi-line text deletes from cursor to end of first line', () => {
+    const initialText = 'Hello\nWorld';
+    const cursorPos = 3; // In first line "Hel"
+    const result = textOperations.deleteToLineEnd(initialText, cursorPos);
+    // Assuming deleteToLineEnd should delete the rest of the first line,
+    // it should return text up to the newline character.
+    expect(result).toBe('Hel');
+  });
+
+  test('deleteToLineStart with multi-line text deletes from start of line', () => {
+    const initialText = 'Hello\nWorld';
+    const cursorPos = 7; // 'Hello\nW', cursor is at 'W' of "World"
+    const result = textOperations.deleteToLineStart(initialText, cursorPos);
+    // Expected result: delete everything before cursor position, setting cursor to 0.
+    expect(result.text).toBe(initialText.slice(cursorPos));
+    expect(result.cursorPos).toBe(0);
+  });
+
+  test('backspace with negative cursor position returns unchanged', () => {
+    const initialText = 'Test';
+    const cursorPos = -1;
+    const result = textOperations.backspace(initialText, cursorPos);
+    expect(result.text).toBe(initialText);
+    expect(result.cursorPos).toBe(cursorPos);
+  });
+
+  test('moveCursorLeft with negative cursor position remains unchanged', () => {
+    const cursorPos = -5;
+    const newPos = textOperations.moveCursorLeft(cursorPos);
+    expect(newPos).toBe(cursorPos);
+  });
+
+  test('moveCursorRight with cursor beyond text length remains unchanged', () => {
+    const initialText = 'Hello';
+    const cursorPos = 10;
+    const newPos = textOperations.moveCursorRight(initialText, cursorPos);
+    expect(newPos).toBe(cursorPos);
+  });
 });

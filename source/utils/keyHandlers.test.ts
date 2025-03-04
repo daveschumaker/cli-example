@@ -141,13 +141,13 @@ describe('keyHandlers', () => {
 
   test('should handle return key (Enter) by logging and clearing', () => {
     handleKey('\r');
-    expect(consoleSpy).toHaveBeenCalledWith('Submitting:', 'sample text');
+    expect(consoleSpy).toHaveBeenCalledWith('>', 'sample text');
     expect(mockHandlers.clear).toHaveBeenCalledTimes(1);
   });
 
   test('should handle newline key (Enter) by logging and clearing', () => {
     handleKey('\n');
-    expect(consoleSpy).toHaveBeenCalledWith('Submitting:', 'sample text');
+    expect(consoleSpy).toHaveBeenCalledWith('>', 'sample text');
     expect(mockHandlers.clear).toHaveBeenCalledTimes(1);
   });
 
