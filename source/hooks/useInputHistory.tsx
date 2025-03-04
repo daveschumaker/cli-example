@@ -6,12 +6,29 @@ import { useState, useCallback } from 'react';
 export const historyOperations = {
   /**
    * Add an entry to history if it's not empty
+   * Collapses adjacent duplicates to keep history clean
    */
   addToHistory: (history: string[], entry: string): string[] => {
-    if (entry.trim()) {
-      return [...history, entry];
+    if (!entry.trim()) return history;
+
+    // If the entry is the same as the most recent entry, don't add it
+    if (history.length > 0 && history[history.length - 1]! === entry) {
+      return [...history];
     }
-    return history;
+
+    // Create a new array for the result, collapsing adjacent duplicates
+    const result: string[] = [];
+
+    for (let i = 0; i < history.length; i++) {
+      // Skip items that are duplicates of their immediate predecessor
+      if (i > 0 && history[i]! === history[i - 1]!) {
+        continue;
+      }
+      result.push(history[i]!);
+    }
+
+    // Add the new entry
+    return [...result, entry];
   },
 
   /**
@@ -21,10 +38,15 @@ export const historyOperations = {
     history: string[],
     currentIndex: number
   ): { entry: string; newIndex: number } => {
-    if (history.length === 0) return { entry: '', newIndex: currentIndex };
-
+    if (history.length === 0) return { entry: '', newIndex: -1 };
+    
+    // Normalize the current index in case it's invalid
+    let normalizedIndex = currentIndex;
+    if (normalizedIndex < -1) normalizedIndex = -1;
+    if (normalizedIndex >= history.length) normalizedIndex = history.length - 1;
+    
     const newIndex =
-      currentIndex < history.length - 1 ? currentIndex + 1 : history.length - 1;
+      normalizedIndex < history.length - 1 ? normalizedIndex + 1 : history.length - 1;
 
     return {
       entry: history[history.length - 1 - newIndex] ?? '',
@@ -39,11 +61,16 @@ export const historyOperations = {
     history: string[],
     currentIndex: number
   ): { entry: string; newIndex: number } => {
-    if (currentIndex <= 0) {
+    // If at beginning or invalid index, return empty
+    if (currentIndex <= 0 || currentIndex < -1) {
       return { entry: '', newIndex: -1 };
     }
+    
+    // Normalize index if it's beyond array bounds
+    let normalizedIndex = currentIndex;
+    if (normalizedIndex >= history.length) normalizedIndex = history.length - 1;
 
-    const newIndex = currentIndex - 1;
+    const newIndex = normalizedIndex - 1;
     return {
       entry: history[history.length - 1 - newIndex] ?? '',
       newIndex
