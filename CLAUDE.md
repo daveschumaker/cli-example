@@ -17,6 +17,8 @@
 - Functional components with hooks (no classes)
 - Consistent naming: components (PascalCase), hooks (useXxx), utils (camelCase)
 - Group imports: external packages first, then internal modules
+- Imports should be sorted alphabetically
+- Imports need to have extensions: `import useCommand from './hooks/useCommand.js';`
 - Tests use .test.tsx suffix with Vitest framework
 - Components go in `/source/components/`, hooks in `/srouce/hooks/`, utilities in `/source/utils/`
 - Prefer explicit typing over type inference where appropriate
