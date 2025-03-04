@@ -4,6 +4,8 @@ import { createKeyHandler } from './keyHandlers.js';
 import {
   ARROW_LEFT,
   ARROW_RIGHT,
+  ARROW_UP,
+  ARROW_DOWN,
   BACKSPACE,
   DELETE,
   CTRL_C,
@@ -44,6 +46,10 @@ describe('keyHandlers', () => {
     deleteToLineStart: Mock;
     deleteToLineEnd: Mock;
     clear: Mock;
+    onArrowUp?: Mock;
+    onArrowDown?: Mock;
+    setText?: Mock;
+    setTextWithCursorAtEnd?: Mock;
   };
 
   let handleKey: (data: string | Buffer) => void;
@@ -103,6 +109,94 @@ describe('keyHandlers', () => {
     handleKey(ARROW_RIGHT);
     expect(mockHandlers.moveCursorRight).toHaveBeenCalledTimes(1);
   });
+  
+  test('should handle arrow up with history navigation', () => {
+    // Setup handler with history navigation
+    const onArrowUp = vi.fn().mockReturnValue('previous entry');
+    const setTextWithCursorAtEnd = vi.fn();
+    
+    const handlerWithHistory = createKeyHandler({
+      ...mockHandlers,
+      onArrowUp,
+      setTextWithCursorAtEnd
+    });
+    
+    handlerWithHistory(ARROW_UP);
+    
+    expect(onArrowUp).toHaveBeenCalledTimes(1);
+    expect(setTextWithCursorAtEnd).toHaveBeenCalledWith('previous entry');
+  });
+  
+  test('should handle arrow up when no history entry is returned', () => {
+    // Setup handler that returns undefined from history
+    const onArrowUp = vi.fn().mockReturnValue(undefined);
+    const setTextWithCursorAtEnd = vi.fn();
+    
+    const handlerWithHistory = createKeyHandler({
+      ...mockHandlers,
+      onArrowUp,
+      setTextWithCursorAtEnd
+    });
+    
+    handlerWithHistory(ARROW_UP);
+    
+    expect(onArrowUp).toHaveBeenCalledTimes(1);
+    expect(setTextWithCursorAtEnd).not.toHaveBeenCalled();
+  });
+  
+  test('should do nothing on arrow up when callbacks are not provided', () => {
+    // Create handler without history navigation callbacks
+    const handler = createKeyHandler({
+      ...mockHandlers
+    });
+    
+    // This should not throw or error
+    handler(ARROW_UP);
+  });
+  
+  test('should handle arrow down with history navigation', () => {
+    // Setup handler with history navigation
+    const onArrowDown = vi.fn().mockReturnValue('next entry');
+    const setTextWithCursorAtEnd = vi.fn();
+    
+    const handlerWithHistory = createKeyHandler({
+      ...mockHandlers,
+      onArrowDown,
+      setTextWithCursorAtEnd
+    });
+    
+    handlerWithHistory(ARROW_DOWN);
+    
+    expect(onArrowDown).toHaveBeenCalledTimes(1);
+    expect(setTextWithCursorAtEnd).toHaveBeenCalledWith('next entry');
+  });
+  
+  test('should handle arrow down when no history entry is returned', () => {
+    // Setup handler that returns undefined from history
+    const onArrowDown = vi.fn().mockReturnValue(undefined);
+    const setTextWithCursorAtEnd = vi.fn();
+    
+    const handlerWithHistory = createKeyHandler({
+      ...mockHandlers,
+      onArrowDown,
+      setTextWithCursorAtEnd
+    });
+    
+    handlerWithHistory(ARROW_DOWN);
+    
+    expect(onArrowDown).toHaveBeenCalledTimes(1);
+    expect(setTextWithCursorAtEnd).not.toHaveBeenCalled();
+  });
+  
+  test('should do nothing on arrow down when callbacks are not provided', () => {
+    // Create handler without history navigation callbacks
+    const handler = createKeyHandler({
+      ...mockHandlers
+    });
+    
+    // This should not throw or error
+    handler(ARROW_DOWN);
+  });
 
   test('should handle home key', () => {
     handleKey(HOME);
@@ -145,7 +239,19 @@ describe('keyHandlers', () => {
     expect(mockHandlers.clear).toHaveBeenCalledTimes(1);
   });
 
-  test('should handle newline key (Enter) by logging and clearing', () => {
+  test('should handle Enter key with onSubmit callback', () => {
+    const onSubmit = vi.fn();
+    const handler = createKeyHandler({
+      ...mockHandlers,
+      text: 'sample text',
+      onSubmit
+    });
+    handler('\r');
+    expect(onSubmit).toHaveBeenCalledWith('sample text');
+    expect(mockHandlers.clear).toHaveBeenCalledTimes(1);
+  });
+
+  test('should handle newline key (Enter) by logging and clearing when onSubmit is not provided', () => {
     handleKey('\n');
     expect(consoleSpy).toHaveBeenCalledWith('>', 'sample text');
     expect(mockHandlers.clear).toHaveBeenCalledTimes(1);
