@@ -2,6 +2,8 @@ import * as React from 'react';
 import {
   ARROW_LEFT,
   ARROW_RIGHT,
+  ARROW_UP,
+  ARROW_DOWN,
   BACKSPACE,
   DELETE,
   CTRL_C,
@@ -29,7 +31,10 @@ export function createKeyHandler({
   deleteToLineStart,
   deleteToLineEnd,
   clear,
-  onSubmit
+  onSubmit,
+  onArrowUp,
+  onArrowDown,
+  setTextWithCursorAtEnd
 }: {
   text: string;
   insertText: (input: string) => void;
@@ -43,6 +48,10 @@ export function createKeyHandler({
   deleteToLineEnd: () => void;
   clear: () => void;
   onSubmit?: (submittedText: string) => void;
+  onArrowUp?: () => string | undefined;
+  onArrowDown?: () => string | undefined;
+  setText?: (text: string) => void;
+  setTextWithCursorAtEnd?: (text: string) => void;
 }) {
   return React.useCallback(
     (data: string | Buffer) => {
@@ -61,7 +70,29 @@ export function createKeyHandler({
         [HOME, moveCursorToStart],
         [END, moveCursorToEnd],
         [CTRL_A, moveCursorToStart],
-        [CTRL_E, moveCursorToEnd]
+        [CTRL_E, moveCursorToEnd],
+        [
+          ARROW_UP,
+          () => {
+            if (onArrowUp && setTextWithCursorAtEnd) {
+              const previousEntry = onArrowUp();
+              if (previousEntry !== undefined) {
+                setTextWithCursorAtEnd(previousEntry);
+              }
+            }
+          }
+        ],
+        [
+          ARROW_DOWN,
+          () => {
+            if (onArrowDown && setTextWithCursorAtEnd) {
+              const nextEntry = onArrowDown();
+              if (nextEntry !== undefined) {
+                setTextWithCursorAtEnd(nextEntry);
+              }
+            }
+          }
+        ]
       ]);
 
       if (keyActions.has(strData)) {

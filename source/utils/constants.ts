@@ -7,6 +7,8 @@ export const CTRL_K = '\x0B';
 export const CTRL_H = '\x08'; // Often also used for backspace
 
 // Arrow keys and navigation
+export const ARROW_UP = '\x1B[A';
+export const ARROW_DOWN = '\x1B[B';
 export const ARROW_LEFT = '\x1B[D';
 export const ARROW_RIGHT = '\x1B[C';
 export const HOME = '\x1B[H';

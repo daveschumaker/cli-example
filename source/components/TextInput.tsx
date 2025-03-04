@@ -2,6 +2,7 @@ import * as React from 'react';
 import { Box, Text, useStdin } from 'ink';
 import { useState, useEffect } from 'react';
 import { useTextWithCursor } from '../hooks/useTextWithCursor.js';
+import { useInputHistory } from '../hooks/useInputHistory.js';
 import { createKeyHandler } from '../utils/keyHandlers.js';
 
 export default function TextInput() {
@@ -17,10 +18,13 @@ export default function TextInput() {
     moveCursorToEnd,
     deleteToLineEnd,
     deleteToLineStart,
-    clear
+    clear,
+    setText,
+    setTextWithCursorAtEnd
   } = useTextWithCursor('');
   const [cursorVisible, setCursorVisible] = useState(true);
   const [submittedLines, setSubmittedLines] = useState<string[]>([]);
+  const { addToHistory, getPreviousEntry, getNextEntry } = useInputHistory();
 
   // Get stdin from Ink context
   const { stdin, setRawMode } = useStdin();
@@ -29,6 +33,7 @@ export default function TextInput() {
   const handleSubmit = (submittedText: string) => {
     if (submittedText.trim()) {
       setSubmittedLines((prev) => [...prev, submittedText]);
+      addToHistory(submittedText);
     }
   };
 
@@ -65,7 +70,11 @@ export default function TextInput() {
     deleteToLineStart,
     deleteToLineEnd,
     clear,
-    onSubmit: handleSubmit
+    onSubmit: handleSubmit,
+    onArrowUp: getPreviousEntry,
+    onArrowDown: getNextEntry,
+    setText,
+    setTextWithCursorAtEnd
   });
 
   // Set up event listener for stdin

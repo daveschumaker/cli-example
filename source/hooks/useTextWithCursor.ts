@@ -107,9 +107,16 @@ export function useTextWithCursor(initialText = '') {
     setCursorPos(result.cursorPos);
   };
 
+  // Set text with cursor at the end
+  const setTextWithCursorAtEnd = (newText: string) => {
+    setText(newText);
+    setCursorPos(newText.length);
+  };
+
   return {
     text,
     setText,
+    setTextWithCursorAtEnd,
     cursorPos,
     setCursorPos,
     insertText,
