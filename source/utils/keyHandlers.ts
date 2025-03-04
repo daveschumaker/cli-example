@@ -28,7 +28,8 @@ export function createKeyHandler({
   moveCursorToEnd,
   deleteToLineStart,
   deleteToLineEnd,
-  clear
+  clear,
+  onSubmit
 }: {
   text: string;
   insertText: (input: string) => void;
@@ -41,6 +42,7 @@ export function createKeyHandler({
   deleteToLineStart: () => void;
   deleteToLineEnd: () => void;
   clear: () => void;
+  onSubmit?: (submittedText: string) => void;
 }) {
   return React.useCallback(
     (data: string | Buffer) => {
@@ -68,7 +70,13 @@ export function createKeyHandler({
         // Handle delete event when using escape sequence format
         deleteChar();
       } else if (strData === '\r' || strData === '\n') {
-        console.log('>', text);
+        // If onSubmit is provided, use it to handle submitted text
+        if (onSubmit) {
+          onSubmit(text);
+        } else {
+          // Fallback to console log for backward compatibility
+          console.log('>', text);
+        }
 
         // Always clear the input field after submission
         clear();
@@ -88,7 +96,8 @@ export function createKeyHandler({
       moveCursorToEnd,
       deleteToLineStart,
       deleteToLineEnd,
-      clear
+      clear,
+      onSubmit
     ]
   );
 }

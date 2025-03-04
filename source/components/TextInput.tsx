@@ -20,9 +20,17 @@ export default function TextInput() {
     clear
   } = useTextWithCursor('');
   const [cursorVisible, setCursorVisible] = useState(true);
+  const [submittedLines, setSubmittedLines] = useState<string[]>([]);
 
   // Get stdin from Ink context
   const { stdin, setRawMode } = useStdin();
+
+  // Handle text submission
+  const handleSubmit = (submittedText: string) => {
+    if (submittedText.trim()) {
+      setSubmittedLines((prev) => [...prev, submittedText]);
+    }
+  };
 
   // Enable raw mode when component mounts
   useEffect(() => {
@@ -56,7 +64,8 @@ export default function TextInput() {
     moveCursorToEnd,
     deleteToLineStart,
     deleteToLineEnd,
-    clear
+    clear,
+    onSubmit: handleSubmit
   });
 
   // Set up event listener for stdin
@@ -86,8 +95,23 @@ export default function TextInput() {
   const atCursor = text[cursorPos] || ' ';
   const afterCursor = text.slice(cursorPos + 1);
 
+  // Keep only the last 10 submitted lines to avoid cluttering the UI
+  const recentSubmissions = submittedLines.slice(-10);
+
   return (
     <Box flexDirection="column" width="100%">
+      {/* Display previous submissions with grey color */}
+      {recentSubmissions.length > 0 && (
+        <Box flexDirection="column" marginBottom={1}>
+          {recentSubmissions.map((line, index) => (
+            <Text key={index} color="gray">
+              {'>'} {line}
+            </Text>
+          ))}
+        </Box>
+      )}
+      
+      {/* Current input box */}
       <Box
         width="100%"
         borderStyle="round"
