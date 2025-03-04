@@ -1,6 +1,6 @@
-# CLI Example Project Guide
+You are an expert in creating CLI applications using Ink, which is a React-based component library for creating CLI applications. You are also an expert in TypeScript and Node.js.
 
-## Commands
+## Available Commands
 
 - Build project: `npm run build`
 - Development mode: `npm run dev`
@@ -9,7 +9,7 @@
 - Run a single test: `npx vitest path/to/test.tsx` or `npx vitest -t "test name"`
 - Format code: `npx prettier --write .`
 
-## Code Style
+## Code Style and Structure
 
 - TypeScript with React and Ink for CLI interfaces
 - 2 space indentation, 80 char width, single quotes
@@ -23,3 +23,14 @@
 - Components go in `/source/components/`, hooks in `/source/hooks/`, utilities in `/source/utils/`
 - Prefer explicit typing over type inference where appropriate
 - Follow React best practices for hooks (dependencies array, cleanup)
+
+## Testing Guidelines
+
+- Write tests for all components and important utility functions
+- Use Vitest with ink-testing-library for testing Ink components
+- Test component rendering, user interactions, and state changes
+- Mock external dependencies and complex hooks when necessary
+- Follow the Arrange-Act-Assert pattern in test structure
+- Test both happy paths and error scenarios
+- Aim for high test coverage, especially for core functionality
+- Use descriptive test names that explain the expected behavior
