@@ -3,8 +3,8 @@ import { Box, Text, useStdin } from 'ink';
 import { useState, useEffect } from 'react';
 import { useTextWithCursor } from '../hooks/useTextWithCursor.js';
 import { useInputHistory } from '../hooks/useInputHistory.js';
-import { useCommand, defaultCommands } from '../hooks/useCommand.js';
 import { createKeyHandler } from '../utils/keyHandlers.js';
+import { CommandController } from '../utils/CommandController.js';
 
 export default function TextInput() {
   const {
@@ -27,34 +27,17 @@ export default function TextInput() {
   const [submittedLines, setSubmittedLines] = useState<string[]>([]);
   const { addToHistory, getPreviousEntry, getNextEntry } = useInputHistory();
   
-  // Define custom handlers for built-in commands
-  const customCommands = [
-    ...defaultCommands.map(cmd => {
-      if (cmd.name === 'help') {
-        return {
-          ...cmd,
-          handler: () => {
-            // Show all available commands when /help is called
-            const commandsList = [
-              ...defaultCommands.map(c => `/${c.name} - ${c.description}`)
-            ];
-            setSubmittedLines(prev => [...prev, ...commandsList]);
-          }
-        };
-      } else if (cmd.name === 'clear') {
-        return {
-          ...cmd,
-          handler: () => {
-            // Clear all previous submissions
-            setSubmittedLines([]);
-          }
-        };
+  // Create command controller
+  const commandController = React.useMemo(() => {
+    return new CommandController({
+      onOutput: (output) => {
+        setSubmittedLines(prev => [...prev, ...output]);
+      },
+      onClear: () => {
+        setSubmittedLines([]);
       }
-      return cmd;
-    })
-  ];
-  
-  const { processCommand } = useCommand(customCommands);
+    });
+  }, []);
 
   // Get stdin from Ink context
   const { stdin, setRawMode } = useStdin();
@@ -62,19 +45,13 @@ export default function TextInput() {
   // Handle text submission
   const handleSubmit = (submittedText: string) => {
     if (submittedText.trim()) {
-      // Add to submitted lines and history
+      // Always add to submitted lines and history
       setSubmittedLines((prev) => [...prev, submittedText]);
       addToHistory(submittedText);
       
-      // Check if it's a slash command
-      const isCommand = processCommand(submittedText);
-      
-      // Display command not found message if it starts with / but isn't recognized
-      if (submittedText.startsWith('/') && !isCommand) {
-        setSubmittedLines((prev) => [
-          ...prev, 
-          `Command not found: ${submittedText}. Type /help to see available commands.`
-        ]);
+      // Process as command if it starts with a slash
+      if (submittedText.startsWith('/')) {
+        commandController.processCommand(submittedText);
       }
     }
   };
