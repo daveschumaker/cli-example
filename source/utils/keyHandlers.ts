@@ -68,7 +68,7 @@ export function createKeyHandler({
         // Handle delete event when using escape sequence format
         deleteChar();
       } else if (strData === '\r' || strData === '\n') {
-        console.log('Submitting:', text);
+        console.log('>', text);
 
         // Always clear the input field after submission
         clear();

@@ -1,11 +1,12 @@
 {
   "name": "cli-example",
   "version": "0.0.0",
-  "license": "MIT",
   "bin": "dist/cli.js",
   "type": "module",
+  "author": "Dave Schumaker <daveschumaker@users.noreply.github.com>",
+  "license": "MIT",
   "engines": {
-    "node": ">=16"
+    "node": ">=18"
   },
   "scripts": {
     "build": "tsc",
