@@ -5,6 +5,7 @@ import { useTextWithCursor } from '../hooks/useTextWithCursor.js';
 import { useInputHistory } from '../hooks/useInputHistory.js';
 import { createKeyHandler } from '../utils/keyHandlers.js';
 import { CommandController } from '../utils/CommandController.js';
+import { ResponseText } from './ResponseText.js';
 
 export default function TextInput() {
   const {
@@ -24,17 +25,26 @@ export default function TextInput() {
     setTextWithCursorAtEnd
   } = useTextWithCursor('');
   const [cursorVisible, setCursorVisible] = useState(true);
-  const [submittedLines, setSubmittedLines] = useState<string[]>([]);
+  // Store both the text and type (user input or system response)
+  const [submissionHistory, setSubmissionHistory] = useState<Array<{
+    text: string;
+    type: 'user-input' | 'system-response';
+  }>>([]);
   const { addToHistory, getPreviousEntry, getNextEntry } = useInputHistory();
   
   // Create command controller
   const commandController = React.useMemo(() => {
     return new CommandController({
       onOutput: (output) => {
-        setSubmittedLines(prev => [...prev, ...output]);
+        // Add system responses to history
+        const systemResponses = output.map(text => ({
+          text,
+          type: 'system-response' as const
+        }));
+        setSubmissionHistory(prev => [...prev, ...systemResponses]);
       },
       onClear: () => {
-        setSubmittedLines([]);
+        setSubmissionHistory([]);
       }
     });
   }, []);
@@ -45,8 +55,13 @@ export default function TextInput() {
   // Handle text submission
   const handleSubmit = (submittedText: string) => {
     if (submittedText.trim()) {
-      // Always add to submitted lines and history
-      setSubmittedLines((prev) => [...prev, submittedText]);
+      // Always add user input to submission history
+      setSubmissionHistory(prev => [
+        ...prev,
+        { text: submittedText, type: 'user-input' }
+      ]);
+      
+      // Add to input history for up/down navigation
       addToHistory(submittedText);
       
       // Process as command if it starts with a slash
@@ -123,18 +138,15 @@ export default function TextInput() {
   const atCursor = text[cursorPos] || ' ';
   const afterCursor = text.slice(cursorPos + 1);
 
-  // Keep only the last 10 submitted lines to avoid cluttering the UI
-  const recentSubmissions = submittedLines.slice(-10);
-
   return (
     <Box flexDirection="column" width="100%">
-      {/* Display previous submissions with grey color */}
-      {recentSubmissions.length > 0 && (
+      {/* Display previous submissions */}
+      {submissionHistory.length > 0 && (
         <Box flexDirection="column" marginBottom={1}>
-          {recentSubmissions.map((line, index) => (
-            <Text key={index} color="gray">
-              {'>'} {line}
-            </Text>
+          {submissionHistory.slice(-10).map((item, index) => (
+            <ResponseText key={index} type={item.type}>
+              {item.text}
+            </ResponseText>
           ))}
         </Box>
       )}
