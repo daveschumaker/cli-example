@@ -1,15 +1,12 @@
 /**
- * This module provides a mock implementation for interfacing with the
- * "LM Studio" service API.
- *
- * It simulates sending a text input to the API and receiving a response after
- * a short delay.
+ * This module provides an implementation for interfacing with the
+ * "LM Studio" service API using the @lmstudio/sdk.
  */
+import { LMStudioClient } from '@lmstudio/sdk';
 
 export async function sendLmStudioRequest(prompt: string): Promise<string> {
-  // Simulate a network delay of 500 milliseconds
-  await new Promise((resolve) => setTimeout(resolve, 500));
-
-  // Return a mock response based on the input prompt
-  return `Response from LM Studio for prompt: "${prompt}"`;
+  const client = new LMStudioClient();
+  const model = await client.llm.model('qwq-32b');
+  const result = await model.respond(prompt);
+  return result.content;
 }
