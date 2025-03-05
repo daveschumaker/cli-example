@@ -1,7 +1,19 @@
 import { sendOllamaRequest } from './ollama.js';
 import { sendClaudeRequest } from './claude.js';
-import { sendLmStudioRequest } from './lmstudio.js';
+import {
+  sendLmStudioRequest,
+  listModels,
+  setCurrentModel,
+  getCurrentModel
+} from './lmstudio.js';
 import { sendOpenAiRequest } from './openai.js';
+
+export const lmStudioManager = {
+  sendRequest: sendLmStudioRequest,
+  listModels,
+  setCurrentModel,
+  getCurrentModel
+};
 
 export enum ApiProviderEnum {
   CLAUDE = 'claude',
@@ -10,7 +22,7 @@ export enum ApiProviderEnum {
   OPENAI = 'openai'
 }
 
-let preferredProvider: ApiProviderEnum = ApiProviderEnum.OLLAMA;
+let preferredProvider: ApiProviderEnum = ApiProviderEnum.LM_STUDIO;
 
 export function setpreferredProvider(provider: ApiProviderEnum): void {
   preferredProvider = provider;
