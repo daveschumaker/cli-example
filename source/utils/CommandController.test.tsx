@@ -1,6 +1,8 @@
 import { describe, test, expect, vi, beforeEach, type Mock } from 'vitest';
 import { CommandController } from './CommandController.js';
 import { SlashCommand } from '../hooks/useCommand.js';
+import * as apiProvider from '../api/apiProvider.js';
+import { ApiProviderEnum } from '../api/apiProvider.js';
 
 describe('CommandController', () => {
   let controller: CommandController;
@@ -135,5 +137,95 @@ describe('CommandController', () => {
 
     expect(mockHandler1).not.toHaveBeenCalled();
     expect(mockHandler2).toHaveBeenCalledWith('args');
+  });
+
+  test('should list available API providers via /providers command', () => {
+    const providersSample: ApiProviderEnum[] = [
+      ApiProviderEnum.OPENAI,
+      ApiProviderEnum.OLLAMA
+    ];
+    // Spy on getAvailableProviders to return our sample
+    const getAvailSpy = vi
+      .spyOn(apiProvider, 'getAvailableProviders')
+      .mockReturnValue(providersSample);
+
+    controller.processCommand('/providers');
+
+    expect(getAvailSpy).toHaveBeenCalled();
+    expect(mockOutput).toHaveBeenCalledWith(
+      ['Available API providers:'].concat(providersSample)
+    );
+  });
+
+  test('should set valid provider via /setprovider command', () => {
+    const providersSample: ApiProviderEnum[] = [
+      ApiProviderEnum.OPENAI,
+      ApiProviderEnum.OLLAMA
+    ];
+    vi.spyOn(apiProvider, 'getAvailableProviders').mockReturnValue(
+      providersSample
+    );
+    const setProviderSpy = vi
+      .spyOn(apiProvider, 'setpreferredProvider')
+      .mockImplementation(() => {});
+
+    controller.processCommand(`/setprovider ${ApiProviderEnum.OPENAI}`);
+
+    expect(setProviderSpy).toHaveBeenCalledWith(ApiProviderEnum.OPENAI);
+    expect(mockOutput).toHaveBeenCalledWith([
+      `Preferred provider set to ${ApiProviderEnum.OPENAI}`
+    ]);
+  });
+
+  test('should show error for invalid provider in /setprovider command', () => {
+    const providersSample: ApiProviderEnum[] = [
+      ApiProviderEnum.OPENAI,
+      ApiProviderEnum.OLLAMA
+    ];
+    vi.spyOn(apiProvider, 'getAvailableProviders').mockReturnValue(
+      providersSample
+    );
+    const setProviderSpy = vi.spyOn(apiProvider, 'setpreferredProvider');
+
+    controller.processCommand('/setprovider invalidProvider');
+
+    expect(setProviderSpy).not.toHaveBeenCalled();
+    expect(mockOutput).toHaveBeenCalledWith([
+      'Invalid provider: invalidProvider. Available: ' +
+        providersSample.join(', ')
+    ]);
+  });
+
+  test('should show current provider via /currentprovider command', () => {
+    const currentProvider: ApiProviderEnum = ApiProviderEnum.OPENAI;
+    vi.spyOn(apiProvider, 'getpreferredProvider').mockReturnValue(
+      currentProvider
+    );
+
+    controller.processCommand('/currentprovider');
+
+    expect(mockOutput).toHaveBeenCalledWith([
+      `Current provider: ${currentProvider}`
+    ]);
+  });
+
+  test('should exit application via /exit command', () => {
+    // Prevent actual process exit
+    const exitSpy = vi.spyOn(process, 'exit').mockImplementation((_: any) => {
+      return undefined as never;
+    });
+    // Use fake timers to trigger the timeout
+    vi.useFakeTimers();
+
+    controller.processCommand('/exit');
+
+    expect(mockOutput).toHaveBeenCalledWith(['Exiting application...']);
+
+    // Fast-forward timer by 101ms to ensure setTimeout handler runs
+    vi.advanceTimersByTime(101);
+    expect(exitSpy).toHaveBeenCalledWith(0);
+
+    // Cleanup fake timers
+    vi.useRealTimers();
   });
 });
