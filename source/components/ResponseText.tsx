@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Text } from 'ink';
+import { Box, Text } from 'ink';
 
 interface ResponseTextProps {
   type: 'user-input' | 'system-response';
@@ -13,16 +13,20 @@ interface ResponseTextProps {
 export function ResponseText({ type, children }: ResponseTextProps) {
   if (type === 'user-input') {
     return (
-      <Text>
-        <Text color="green" bold>{'> '}</Text>
-        {children}
-      </Text>
+      <Box paddingBottom={1}>
+        <Text color="gray">
+          <Text color="green" bold>{'> '}</Text>
+          {children}
+        </Text>
+      </Box>
     );
   } else {
     return (
-      <Text color="cyan">
-        {children}
-      </Text>
+      <Box paddingBottom={1}>
+        <Text color="cyan">
+          {children}
+        </Text>
+      </Box>
     );
   }
 }

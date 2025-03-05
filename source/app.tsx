@@ -2,16 +2,21 @@ import React from 'react';
 import { Box, Text } from 'ink';
 import TextInput from './components/TextInput.js';
 
-type Props = {
-  name: string | undefined;
-};
-
-export default function App({ name = 'Stranger' }: Props) {
+export default function App() {
   return (
     <Box flexDirection="column">
-      <Text>
-        Hello, <Text color="green">{name}</Text>
-      </Text>
+      <Box
+        paddingY={1}
+        width="100%"
+        borderStyle="round"
+        borderColor="gray"
+      >
+        <Box padding={1}>
+          <Text>
+            CLI Example v0.0.1
+          </Text>
+        </Box>
+      </Box>
       <TextInput />
     </Box>
   );
