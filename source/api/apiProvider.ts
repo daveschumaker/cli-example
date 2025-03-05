@@ -20,6 +20,10 @@ export function getpreferredProvider(): ApiProviderEnum {
   return preferredProvider;
 }
 
+export function getAvailableProviders(): ApiProviderEnum[] {
+  return Object.values(ApiProviderEnum);
+}
+
 export async function sendApiRequest(prompt: string): Promise<string> {
   switch (preferredProvider) {
     case ApiProviderEnum.CLAUDE:
