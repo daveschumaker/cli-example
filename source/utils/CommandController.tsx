@@ -75,6 +75,11 @@ export class CommandController {
    * Returns true if a command was executed, false otherwise
    */
   processCommand(input: string): boolean {
+    // Handle null/undefined input gracefully
+    if (!input) {
+      return false;
+    }
+    
     // Check if the input starts with a slash
     if (!input.trim().startsWith('/')) {
       return false;
