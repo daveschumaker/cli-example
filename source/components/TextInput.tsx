@@ -6,7 +6,7 @@ import { useInputHistory } from '../hooks/useInputHistory.js';
 import { createKeyHandler } from '../utils/keyHandlers.js';
 import { CommandController } from '../utils/CommandController.js';
 import { ResponseText } from './ResponseText.js';
-import { sendApiRequest } from '../api/apiService.js';
+import { sendApiRequest } from '../api/apiProvider.js';
 
 export default function TextInput() {
   const {
