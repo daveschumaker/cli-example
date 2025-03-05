@@ -3,6 +3,7 @@ import { CommandController } from './CommandController.js';
 import { SlashCommand } from '../hooks/useCommand.js';
 import * as apiProvider from '../api/apiProvider.js';
 import { ApiProviderEnum } from '../api/apiProvider.js';
+import { SlashCommands } from './constants.js';
 
 describe('CommandController', () => {
   let controller: CommandController;
@@ -21,15 +22,15 @@ describe('CommandController', () => {
   test('should register and process custom commands', () => {
     const mockHandler = vi.fn();
     const customCommand: SlashCommand = {
-      name: 'custom',
-      description: 'A custom command',
+      name: SlashCommands.HELP, // Using an existing SlashCommands enum value
+      description: 'A custom help command',
       handler: mockHandler
     };
 
     controller.registerCommand(customCommand);
 
     // Process the command
-    const result = controller.processCommand('/custom arg1 arg2');
+    const result = controller.processCommand('/help arg1 arg2');
 
     expect(result).toBe(true);
     expect(mockHandler).toHaveBeenCalledWith('arg1 arg2');
@@ -38,12 +39,12 @@ describe('CommandController', () => {
   test('should handle commands without arguments', () => {
     const mockHandler = vi.fn();
     controller.registerCommand({
-      name: 'noargs',
+      name: SlashCommands.CLEAR, // Using an existing SlashCommands enum value
       description: 'Command with no args',
       handler: mockHandler
     });
 
-    controller.processCommand('/noargs');
+    controller.processCommand('/clear');
 
     expect(mockHandler).toHaveBeenCalledWith('');
   });
@@ -88,9 +89,9 @@ describe('CommandController', () => {
     const commands = controller.getAvailableCommands();
 
     // Should include at least the built-in commands
-    expect(commands.some((cmd) => cmd.name === 'help')).toBe(true);
-    expect(commands.some((cmd) => cmd.name === 'clear')).toBe(true);
-    expect(commands.some((cmd) => cmd.name === 'exit')).toBe(true);
+    expect(commands.some((cmd) => cmd.name === SlashCommands.HELP)).toBe(true);
+    expect(commands.some((cmd) => cmd.name === SlashCommands.CLEAR)).toBe(true);
+    expect(commands.some((cmd) => cmd.name === SlashCommands.EXIT)).toBe(true);
   });
 
   test('should register multiple commands at once', () => {
@@ -99,19 +100,19 @@ describe('CommandController', () => {
 
     controller.registerCommands([
       {
-        name: 'cmd1',
+        name: SlashCommands.PROVIDERS,
         description: 'Command 1',
         handler: mockHandler1
       },
       {
-        name: 'cmd2',
+        name: SlashCommands.SETPROVIDER,
         description: 'Command 2',
         handler: mockHandler2
       }
     ]);
 
-    controller.processCommand('/cmd1 args1');
-    controller.processCommand('/cmd2 args2');
+    controller.processCommand('/providers args1');
+    controller.processCommand('/setprovider args2');
 
     expect(mockHandler1).toHaveBeenCalledWith('args1');
     expect(mockHandler2).toHaveBeenCalledWith('args2');
@@ -122,18 +123,18 @@ describe('CommandController', () => {
     const mockHandler2 = vi.fn();
 
     controller.registerCommand({
-      name: 'same',
+      name: SlashCommands.CURRENTPROVIDER,
       description: 'Original command',
       handler: mockHandler1
     });
 
     controller.registerCommand({
-      name: 'same',
+      name: SlashCommands.CURRENTPROVIDER,
       description: 'Replacement command',
       handler: mockHandler2
     });
 
-    controller.processCommand('/same args');
+    controller.processCommand('/currentprovider args');
 
     expect(mockHandler1).not.toHaveBeenCalled();
     expect(mockHandler2).toHaveBeenCalledWith('args');
@@ -227,5 +228,17 @@ describe('CommandController', () => {
 
     // Cleanup fake timers
     vi.useRealTimers();
+  });
+
+  test('should throw an error when registering an invalid command name', () => {
+    const mockHandler = vi.fn();
+    
+    expect(() => {
+      controller.registerCommand({
+        name: 'invalid_command' as any, // Using a name not in SlashCommands enum
+        description: 'This should fail',
+        handler: mockHandler
+      });
+    }).toThrow(/Invalid command name/);
   });
 });

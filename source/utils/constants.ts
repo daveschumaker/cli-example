@@ -15,3 +15,23 @@ export const HOME = '\x1B[H';
 export const END = '\x1B[F';
 export const CTRL_A = '\x01'; // Alternative home
 export const CTRL_E = '\x05'; // Alternative end
+
+/**
+ * Enum of all available slash commands
+ */
+export enum SlashCommands {
+  HELP = 'help',
+  CLEAR = 'clear',
+  PROVIDERS = 'providers',
+  SETPROVIDER = 'setprovider',
+  CURRENTPROVIDER = 'currentprovider',
+  LISTMODELS = 'listmodels',
+  SETMODEL = 'setmodel',
+  CURRENTMODEL = 'currentmodel',
+  EXIT = 'exit'
+}
+
+/**
+ * Array of valid command names
+ */
+export const ValidCommands: string[] = Object.values(SlashCommands);

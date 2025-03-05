@@ -6,27 +6,7 @@ import {
   ApiProviderEnum,
   getModelManagerForProvider
 } from '../api/apiProvider.js';
-
-export enum SlashCommands {
-  HELP = 'help',
-  CLEAR = 'clear',
-  PROVIDERS = 'providers',
-  SETPROVIDER = 'setprovider',
-  CURRENTPROVIDER = 'currentprovider',
-  LISTMODELS = 'listmodels',
-  SETMODEL = 'setmodel',
-  CURRENTMODEL = 'currentmodel',
-  EXIT = 'exit'
-}
-
-export const ValidCommands: string[] = [
-  SlashCommands.HELP,
-  SlashCommands.EXIT,
-  SlashCommands.CLEAR,
-  SlashCommands.SETPROVIDER,
-  SlashCommands.PROVIDERS,
-  SlashCommands.CURRENTPROVIDER
-];
+import { SlashCommands, ValidCommands } from './constants.js';
 
 /**
  * Controller for managing slash commands and their interactions with the UI
@@ -58,8 +38,19 @@ export class CommandController {
 
   /**
    * Register a new command
+   * @throws Error if the command name is not in the SlashCommands enum
    */
   registerCommand(command: SlashCommand): void {
+    // Ensure the command name is in the SlashCommands enum
+    const commandValues = Object.values(SlashCommands);
+    const isValidCommand = commandValues.includes(command.name as SlashCommands);
+    
+    if (!isValidCommand) {
+      throw new Error(
+        `Invalid command name: ${command.name}. Command name must be one of the SlashCommands enum values: ${commandValues.join(', ')}`
+      );
+    }
+
     // Replace command if it already exists
     const existingIndex = this.commands.findIndex(
       (cmd) => cmd.name === command.name
@@ -73,6 +64,7 @@ export class CommandController {
 
   /**
    * Register multiple commands at once
+   * @throws Error if any command name is not in the SlashCommands enum
    */
   registerCommands(commands: SlashCommand[]): void {
     commands.forEach((command) => this.registerCommand(command));
@@ -148,7 +140,7 @@ export class CommandController {
   private registerBuiltInCommands(): void {
     // Help command
     this.registerCommand({
-      name: 'help',
+      name: SlashCommands.HELP,
       description: 'Show available commands',
       handler: () => {
         const commandsList = this.getAvailableCommands().map(
@@ -160,7 +152,7 @@ export class CommandController {
 
     // Clear command
     this.registerCommand({
-      name: 'clear',
+      name: SlashCommands.CLEAR,
       description: 'Clear the terminal',
       handler: () => {
         this.clearTerminal();
@@ -169,7 +161,7 @@ export class CommandController {
 
     // Provider commands
     this.registerCommand({
-      name: 'providers',
+      name: SlashCommands.PROVIDERS,
       description: 'List available API providers',
       handler: () => {
         const providers = getAvailableProviders();
@@ -178,7 +170,7 @@ export class CommandController {
     });
 
     this.registerCommand({
-      name: 'setprovider',
+      name: SlashCommands.SETPROVIDER,
       description:
         'Set the preferred API provider. Usage: /setprovider providerName',
       handler: (args: string) => {
@@ -196,7 +188,7 @@ export class CommandController {
     });
 
     this.registerCommand({
-      name: 'currentprovider',
+      name: SlashCommands.CURRENTPROVIDER,
       description: 'Show the current API provider',
       handler: () => {
         const current = getpreferredProvider();
@@ -206,7 +198,7 @@ export class CommandController {
 
     // Model management commands abstracted for the current API provider
     this.registerCommand({
-      name: 'listmodels',
+      name: SlashCommands.LISTMODELS,
       description: 'List available models for the current API provider',
       handler: (_args: string) => {
         const provider = getpreferredProvider();
@@ -229,7 +221,7 @@ export class CommandController {
     });
 
     this.registerCommand({
-      name: 'setmodel',
+      name: SlashCommands.SETMODEL,
       description:
         'Set the current model for the current API provider. Usage: /setmodel modelKey',
       handler: (_args: string) => {
@@ -279,7 +271,7 @@ export class CommandController {
 
     // Exit command
     this.registerCommand({
-      name: 'exit',
+      name: SlashCommands.EXIT,
       description: 'Exit the application',
       handler: () => {
         this.showOutput(['Exiting application...']);

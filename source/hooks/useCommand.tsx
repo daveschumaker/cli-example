@@ -1,9 +1,10 @@
 import { useCallback } from 'react';
+import { SlashCommands } from '../utils/constants.js';
 
 export type CommandHandler = (args: string) => void;
 
 export interface SlashCommand {
-  name: string;
+  name: SlashCommands | string; // Allow string for backward compatibility, but prefer SlashCommands
   description: string;
   handler: CommandHandler;
 }
@@ -72,7 +73,7 @@ export function useCommand(commands: SlashCommand[] = []) {
  */
 export const defaultCommands: SlashCommand[] = [
   {
-    name: 'exit',
+    name: SlashCommands.EXIT,
     description: 'Exit the application',
     handler: () => {
       console.log('Exiting application...');
@@ -80,7 +81,7 @@ export const defaultCommands: SlashCommand[] = [
     }
   },
   {
-    name: 'help',
+    name: SlashCommands.HELP,
     description: 'Show available commands',
     // @ts-ignore
     handler: (args: string) => {
@@ -89,7 +90,7 @@ export const defaultCommands: SlashCommand[] = [
     }
   },
   {
-    name: 'clear',
+    name: SlashCommands.CLEAR,
     description: 'Clear the terminal',
     handler: () => {
       // This is a placeholder. The actual implementation will be in TextInput.tsx
