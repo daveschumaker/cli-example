@@ -6,6 +6,7 @@ import { useInputHistory } from '../hooks/useInputHistory.js';
 import { createKeyHandler } from '../utils/keyHandlers.js';
 import { CommandController } from '../utils/CommandController.js';
 import { ResponseText } from './ResponseText.js';
+import Spinner from './Spinner.js';
 import { sendApiRequest } from '../api/apiProvider.js';
 
 export default function TextInput() {
@@ -32,6 +33,7 @@ export default function TextInput() {
       type: 'user-input' | 'system-response';
     }>
   >([]);
+  const [isLoading, setIsLoading] = useState(false);
   const { addToHistory, getPreviousEntry, getNextEntry } = useInputHistory();
 
   const commandController = React.useMemo(() => {
@@ -63,12 +65,17 @@ export default function TextInput() {
       if (submittedText.startsWith('/')) {
         commandController.processCommand(submittedText);
       } else {
-        sendApiRequest(submittedText).then((response: string) => {
-          setSubmissionHistory((prev) => [
-            ...prev,
-            { text: response, type: 'system-response' }
-          ]);
-        });
+        setIsLoading(true);
+        sendApiRequest(submittedText)
+          .then((response: string) => {
+            setSubmissionHistory((prev) => [
+              ...prev,
+              { text: response, type: 'system-response' }
+            ]);
+          })
+          .finally(() => {
+            setIsLoading(false);
+          });
       }
     }
   };
@@ -135,13 +142,18 @@ export default function TextInput() {
 
   return (
     <Box flexDirection="column" width="100%">
-      {submissionHistory.length > 0 && (
+      {(submissionHistory.length > 0 || isLoading) && (
         <Box flexDirection="column" marginBottom={1}>
           {submissionHistory.slice(-10).map((item, index) => (
             <ResponseText key={index} type={item.type}>
               {item.text}
             </ResponseText>
           ))}
+          {isLoading && (
+            <Box paddingY={1}>
+              <Spinner />
+            </Box>
+          )}
         </Box>
       )}
 
