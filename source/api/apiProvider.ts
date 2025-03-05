@@ -36,6 +36,15 @@ export function getAvailableProviders(): ApiProviderEnum[] {
   return Object.values(ApiProviderEnum);
 }
 
+export function getModelManagerForProvider(provider: ApiProviderEnum) {
+  switch (provider) {
+    case ApiProviderEnum.LM_STUDIO:
+      return lmStudioManager;
+    default:
+      return null;
+  }
+}
+
 export async function sendApiRequest(prompt: string): Promise<string> {
   switch (preferredProvider) {
     case ApiProviderEnum.CLAUDE:

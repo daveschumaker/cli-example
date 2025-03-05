@@ -3,7 +3,8 @@ import {
   setpreferredProvider,
   getAvailableProviders,
   getpreferredProvider,
-  ApiProviderEnum
+  ApiProviderEnum,
+  getModelManagerForProvider
 } from '../api/apiProvider.js';
 
 export enum SlashCommands {
@@ -12,6 +13,9 @@ export enum SlashCommands {
   PROVIDERS = 'providers',
   SETPROVIDER = 'setprovider',
   CURRENTPROVIDER = 'currentprovider',
+  LISTMODELS = 'listmodels',
+  SETMODEL = 'setmodel',
+  CURRENTMODEL = 'currentmodel',
   EXIT = 'exit'
 }
 
@@ -197,6 +201,79 @@ export class CommandController {
       handler: () => {
         const current = getpreferredProvider();
         this.showOutput([`Current provider: ${current}`]);
+      }
+    });
+
+    // Model management commands abstracted for the current API provider
+    this.registerCommand({
+      name: 'listmodels',
+      description: 'List available models for the current API provider',
+      handler: (_args: string) => {
+        const provider = getpreferredProvider();
+        const modelManager = getModelManagerForProvider(provider);
+        if (modelManager && typeof modelManager.listModels === 'function') {
+          modelManager
+            .listModels()
+            .then((models: string[]) => {
+              this.showOutput(['Available models:'].concat(models));
+            })
+            .catch((error: Error) => {
+              this.showOutput([`Error retrieving models: ${error.message}`]);
+            });
+        } else {
+          this.showOutput([
+            `The current provider (${provider}) does not support model management.`
+          ]);
+        }
+      }
+    });
+
+    this.registerCommand({
+      name: 'setmodel',
+      description:
+        'Set the current model for the current API provider. Usage: /setmodel modelKey',
+      handler: (_args: string) => {
+        if (!_args) {
+          this.showOutput(['Model key is required. Usage: /setmodel modelKey']);
+          return;
+        }
+        const provider = getpreferredProvider();
+        const modelManager = getModelManagerForProvider(provider);
+        if (
+          modelManager &&
+          typeof modelManager.setCurrentModel === 'function'
+        ) {
+          modelManager.setCurrentModel(_args);
+          this.showOutput([
+            `Current model set to ${_args} for provider ${provider}`
+          ]);
+        } else {
+          this.showOutput([
+            `The current provider (${provider}) does not support model management.`
+          ]);
+        }
+      }
+    });
+
+    this.registerCommand({
+      name: SlashCommands.CURRENTMODEL,
+      description: 'Show the current model for the current API provider',
+      handler: () => {
+        const provider = getpreferredProvider();
+        const modelManager = getModelManagerForProvider(provider);
+        if (
+          modelManager &&
+          typeof modelManager.getCurrentModel === 'function'
+        ) {
+          const current = modelManager.getCurrentModel();
+          this.showOutput([
+            `Current model for provider ${provider}: ${current}`
+          ]);
+        } else {
+          this.showOutput([
+            `The current provider (${provider}) does not support model management.`
+          ]);
+        }
       }
     });
 
