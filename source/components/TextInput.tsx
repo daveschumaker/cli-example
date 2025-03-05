@@ -6,6 +6,7 @@ import { useInputHistory } from '../hooks/useInputHistory.js';
 import { createKeyHandler } from '../utils/keyHandlers.js';
 import { CommandController } from '../utils/CommandController.js';
 import { ResponseText } from './ResponseText.js';
+import { sendApiRequest } from '../api/apiService.js';
 
 export default function TextInput() {
   const {
@@ -25,23 +26,22 @@ export default function TextInput() {
     setTextWithCursorAtEnd
   } = useTextWithCursor('');
   const [cursorVisible, setCursorVisible] = useState(true);
-  // Store both the text and type (user input or system response)
-  const [submissionHistory, setSubmissionHistory] = useState<Array<{
-    text: string;
-    type: 'user-input' | 'system-response';
-  }>>([]);
+  const [submissionHistory, setSubmissionHistory] = useState<
+    Array<{
+      text: string;
+      type: 'user-input' | 'system-response';
+    }>
+  >([]);
   const { addToHistory, getPreviousEntry, getNextEntry } = useInputHistory();
-  
-  // Create command controller
+
   const commandController = React.useMemo(() => {
     return new CommandController({
       onOutput: (output) => {
-        // Add system responses to history
-        const systemResponses = output.map(text => ({
+        const systemResponses = output.map((text) => ({
           text,
           type: 'system-response' as const
         }));
-        setSubmissionHistory(prev => [...prev, ...systemResponses]);
+        setSubmissionHistory((prev) => [...prev, ...systemResponses]);
       },
       onClear: () => {
         setSubmissionHistory([]);
@@ -49,33 +49,33 @@ export default function TextInput() {
     });
   }, []);
 
-  // Get stdin from Ink context
   const { stdin, setRawMode } = useStdin();
 
-  // Handle text submission
   const handleSubmit = (submittedText: string) => {
     if (submittedText.trim()) {
-      // Always add user input to submission history
-      setSubmissionHistory(prev => [
+      setSubmissionHistory((prev) => [
         ...prev,
         { text: submittedText, type: 'user-input' }
       ]);
-      
-      // Add to input history for up/down navigation
+
       addToHistory(submittedText);
-      
-      // Process as command if it starts with a slash
+
       if (submittedText.startsWith('/')) {
         commandController.processCommand(submittedText);
+      } else {
+        sendApiRequest(submittedText).then((response: string) => {
+          setSubmissionHistory((prev) => [
+            ...prev,
+            { text: response, type: 'system-response' }
+          ]);
+        });
       }
     }
   };
 
-  // Enable raw mode when component mounts
   useEffect(() => {
     if (setRawMode) {
       setRawMode(true);
-      // Make sure to disable raw mode when component unmounts
       return () => {
         setRawMode(false);
       };
@@ -83,7 +83,6 @@ export default function TextInput() {
     return undefined;
   }, [setRawMode]);
 
-  // Blink the cursor
   useEffect(() => {
     const timer = setInterval(() => {
       setCursorVisible((v) => !v);
@@ -91,7 +90,6 @@ export default function TextInput() {
     return () => clearInterval(timer);
   }, []);
 
-  // Create key handler with all the necessary functions
   const handleDirectInput = createKeyHandler({
     text,
     insertText,
@@ -111,14 +109,12 @@ export default function TextInput() {
     setTextWithCursorAtEnd
   });
 
-  // Set up event listener for stdin
   useEffect(() => {
     if (!stdin) return undefined;
     const onData = (data: Buffer): void => {
       handleDirectInput(data.toString());
       return;
     };
-    // Cast stdin to any to bypass TypeScript errors regarding internal_eventEmitter
     if ((stdin as any).internal_eventEmitter) {
       (stdin as any).internal_eventEmitter.on('input', onData);
     } else {
@@ -133,14 +129,12 @@ export default function TextInput() {
     };
   }, [stdin, handleDirectInput]);
 
-  // Split text for rendering with cursor
   const beforeCursor = text.slice(0, cursorPos);
   const atCursor = text[cursorPos] || ' ';
   const afterCursor = text.slice(cursorPos + 1);
 
   return (
     <Box flexDirection="column" width="100%">
-      {/* Display previous submissions */}
       {submissionHistory.length > 0 && (
         <Box flexDirection="column" marginBottom={1}>
           {submissionHistory.slice(-10).map((item, index) => (
@@ -150,8 +144,7 @@ export default function TextInput() {
           ))}
         </Box>
       )}
-      
-      {/* Current input box */}
+
       <Box
         width="100%"
         borderStyle="round"
