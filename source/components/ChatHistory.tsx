@@ -3,8 +3,9 @@ import { Box, Static } from 'ink';
 import { ResponseText } from './ResponseText.js';
 import { useChat } from '../context/ChatContext.js';
 
-export function ChatHistory() {
+function ChatHistoryComponent() {
   const { chatHistory } = useChat();
+
   return (
     <Box flexDirection="column" width="100%">
       {chatHistory.length > 0 && (
@@ -22,3 +23,5 @@ export function ChatHistory() {
     </Box>
   );
 }
+
+export const ChatHistory = React.memo(ChatHistoryComponent);
