@@ -2,6 +2,7 @@ import { sendOllamaRequest } from './ollama.js';
 import { sendClaudeRequest } from './claude.js';
 import { sendLmStudioRequest, listModels } from './lmstudio.js';
 import { sendOpenAiRequest } from './openai.js';
+import { Message } from '../context/ChatContext.js';
 
 export const lmStudioManager = {
   sendRequest: sendLmStudioRequest,
@@ -39,7 +40,7 @@ export function getModelManagerForProvider(provider: ApiProviderEnum) {
 }
 export async function sendApiRequest(
   prompt: string,
-  conversationContext?: string
+  conversationContext?: Message[]
 ): Promise<string> {
   switch (preferredProvider) {
     case ApiProviderEnum.CLAUDE:

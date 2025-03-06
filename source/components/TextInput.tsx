@@ -78,13 +78,7 @@ export default function TextInput() {
         commandController.processCommand(submittedText);
       } else {
         setIsLoading(true);
-        const context = chatHistory
-          .map(
-            (msg) =>
-              `${msg.role === 'assistant' ? '[assistant]' : '[user]'}: ${msg.content}`
-          )
-          .join('\n');
-        sendApiRequest(submittedText, context)
+        sendApiRequest(submittedText, chatHistory)
           .then((response: string) => {
             addMessage({
               role: 'assistant',
