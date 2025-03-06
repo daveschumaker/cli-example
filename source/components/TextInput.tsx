@@ -1,14 +1,15 @@
 import * as React from 'react';
-import { Box, Text, useStdin, Static } from 'ink';
+import { Box, Text, useStdin } from 'ink';
 import { useState, useEffect } from 'react';
 import { useTextWithCursor } from '../hooks/useTextWithCursor.js';
-import { useInputHistory } from '../hooks/useInputHistory.js';
 import { createKeyHandler } from '../utils/keyHandlers.js';
 import { CommandController } from '../utils/CommandController.js';
-import { ResponseText } from './ResponseText.js';
 import Spinner from './Spinner.js';
 import { sendApiRequest } from '../api/apiProvider.js';
 import ModeContext from '../context/ModeContext.js';
+import { useInputHistory } from '../hooks/useInputHistory.js';
+import { useChat } from '../context/ChatContext.js';
+import { ChatHistory } from './ChatHistory.js';
 
 export default function TextInput() {
   const {
@@ -28,28 +29,27 @@ export default function TextInput() {
     setTextWithCursorAtEnd
   } = useTextWithCursor('');
   const [cursorVisible, setCursorVisible] = useState(true);
-  const [submissionHistory, setSubmissionHistory] = useState<
-    Array<{
-      text: string;
-      type: 'user-input' | 'system-response';
-    }>
-  >([]);
   const [isLoading, setIsLoading] = useState(false);
-  const { addToHistory, getPreviousEntry, getNextEntry } = useInputHistory();
-
   const modeContext = React.useContext(ModeContext);
+  const { addMessage, clearHistory } = useChat();
+  const { addToHistory, getPreviousEntry, getNextEntry } = useInputHistory();
+  const { stdin, setRawMode } = useStdin();
 
   const commandController = React.useMemo(() => {
     return new CommandController({
       onOutput: (output) => {
-        const systemResponses = output.map((text) => ({
-          text,
-          type: 'system-response' as const
-        }));
-        setSubmissionHistory((prev) => [...prev, ...systemResponses]);
+        output.forEach((text) => {
+          addMessage({
+            role: 'assistant',
+            content: text,
+            timestamp: new Date(),
+            generation_time: 0,
+            tokens: 0
+          });
+        });
       },
       onClear: () => {
-        setSubmissionHistory([]);
+        clearHistory();
       },
       onModeChange: (newMode) => {
         modeContext.setCurrentMode(newMode);
@@ -61,17 +61,17 @@ export default function TextInput() {
         modeContext.setPreferredProvider(newProvider);
       }
     });
-  }, [modeContext]);
-
-  const { stdin, setRawMode } = useStdin();
+  }, [modeContext, addMessage, clearHistory]);
 
   const handleSubmit = (submittedText: string) => {
     if (submittedText.trim()) {
-      setSubmissionHistory((prev) => [
-        ...prev,
-        { text: submittedText, type: 'user-input' }
-      ]);
-
+      addMessage({
+        role: 'user',
+        content: submittedText,
+        timestamp: new Date(),
+        generation_time: 0,
+        tokens: 0
+      });
       addToHistory(submittedText);
 
       if (submittedText.startsWith('/')) {
@@ -80,10 +80,13 @@ export default function TextInput() {
         setIsLoading(true);
         sendApiRequest(submittedText)
           .then((response: string) => {
-            setSubmissionHistory((prev) => [
-              ...prev,
-              { text: response, type: 'system-response' }
-            ]);
+            addMessage({
+              role: 'assistant',
+              content: response,
+              timestamp: new Date(),
+              generation_time: 0,
+              tokens: 0
+            });
           })
           .finally(() => {
             setIsLoading(false);
@@ -132,7 +135,6 @@ export default function TextInput() {
     if (!stdin) return undefined;
     const onData = (data: Buffer): void => {
       handleDirectInput(data.toString());
-      return;
     };
     if ((stdin as any).internal_eventEmitter) {
       (stdin as any).internal_eventEmitter.on('input', onData);
@@ -154,23 +156,12 @@ export default function TextInput() {
 
   return (
     <Box flexDirection="column" width="100%">
-      {(submissionHistory.length > 0 || isLoading) && (
-        <>
-          <Static items={submissionHistory}>
-            {(item, index) => (
-              <ResponseText key={index} type={item.type}>
-                {item.text}
-              </ResponseText>
-            )}
-          </Static>
-          {isLoading && (
-            <Box paddingY={1}>
-              <Spinner />
-            </Box>
-          )}
-        </>
+      <ChatHistory />
+      {isLoading && (
+        <Box paddingY={1}>
+          <Spinner />
+        </Box>
       )}
-
       <Box
         width="100%"
         borderStyle="round"
