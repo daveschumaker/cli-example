@@ -5,10 +5,17 @@
 import { LMStudioClient } from '@lmstudio/sdk';
 import { getSelectedModel } from '../context/ModeContext.js';
 
-export async function sendLmStudioRequest(prompt: string): Promise<string> {
+export async function sendLmStudioRequest(
+  prompt: string,
+  conversationContext?: string
+): Promise<string> {
+  const fullPrompt = conversationContext
+    ? `${conversationContext}\n${prompt}\n[assistant]: `
+    : prompt;
+
   const client = new LMStudioClient();
   const model = await client.llm.model(getSelectedModel());
-  const result = await model.respond(prompt);
+  const result = await model.respond(fullPrompt);
   return result.content;
 }
 

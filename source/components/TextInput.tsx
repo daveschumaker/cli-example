@@ -31,7 +31,7 @@ export default function TextInput() {
   const [cursorVisible, setCursorVisible] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const modeContext = React.useContext(ModeContext);
-  const { addMessage, clearHistory } = useChat();
+  const { chatHistory, addMessage, clearHistory } = useChat();
   const { addToHistory, getPreviousEntry, getNextEntry } = useInputHistory();
   const { stdin, setRawMode } = useStdin();
 
@@ -78,7 +78,13 @@ export default function TextInput() {
         commandController.processCommand(submittedText);
       } else {
         setIsLoading(true);
-        sendApiRequest(submittedText)
+        const context = chatHistory
+          .map(
+            (msg) =>
+              `${msg.role === 'assistant' ? '[assistant]' : '[user]'}: ${msg.content}`
+          )
+          .join('\n');
+        sendApiRequest(submittedText, context)
           .then((response: string) => {
             addMessage({
               role: 'assistant',

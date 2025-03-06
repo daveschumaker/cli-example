@@ -37,13 +37,17 @@ export function getModelManagerForProvider(provider: ApiProviderEnum) {
       return null;
   }
 }
-
-export async function sendApiRequest(prompt: string): Promise<string> {
+export async function sendApiRequest(
+  prompt: string,
+  conversationContext?: string
+): Promise<string> {
   switch (preferredProvider) {
     case ApiProviderEnum.CLAUDE:
       return sendClaudeRequest(prompt);
     case ApiProviderEnum.LM_STUDIO:
-      return sendLmStudioRequest(prompt);
+      return conversationContext === undefined
+        ? sendLmStudioRequest(prompt)
+        : sendLmStudioRequest(prompt, conversationContext);
     case ApiProviderEnum.OPENAI:
       return sendOpenAiRequest(prompt);
     case ApiProviderEnum.OLLAMA:
