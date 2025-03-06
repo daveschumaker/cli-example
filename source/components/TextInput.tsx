@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Box, Text, useStdin } from 'ink';
+import { Box, Text, useStdin, Static } from 'ink';
 import { useState, useEffect } from 'react';
 import { useTextWithCursor } from '../hooks/useTextWithCursor.js';
 import { useInputHistory } from '../hooks/useInputHistory.js';
@@ -143,18 +143,20 @@ export default function TextInput() {
   return (
     <Box flexDirection="column" width="100%">
       {(submissionHistory.length > 0 || isLoading) && (
-        <Box flexDirection="column" marginBottom={1}>
-          {submissionHistory.slice(-10).map((item, index) => (
-            <ResponseText key={index} type={item.type}>
-              {item.text}
-            </ResponseText>
-          ))}
+        <>
+          <Static items={submissionHistory}>
+            {(item, index) => (
+              <ResponseText key={index} type={item.type}>
+                {item.text}
+              </ResponseText>
+            )}
+          </Static>
           {isLoading && (
             <Box paddingY={1}>
               <Spinner />
             </Box>
           )}
-        </Box>
+        </>
       )}
 
       <Box

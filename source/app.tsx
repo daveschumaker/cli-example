@@ -1,22 +1,27 @@
 import React from 'react';
-import { Box, Text } from 'ink';
+import { Box, Text, Static } from 'ink';
 import TextInput from './components/TextInput.js';
 
 export default function App() {
   return (
     <Box flexDirection="column">
-      <Box
-        paddingY={1}
-        width="100%"
-        borderStyle="round"
-        borderColor="gray"
+      <Static
+        items={[
+          <Box
+            paddingY={1}
+            width="100%"
+            borderStyle="round"
+            borderColor="gray"
+            key="cli-header"
+          >
+            <Box padding={1}>
+              <Text>CLI Example v0.0.1</Text>
+            </Box>
+          </Box>
+        ]}
       >
-        <Box padding={1}>
-          <Text>
-            CLI Example v0.0.1
-          </Text>
-        </Box>
-      </Box>
+        {(item) => item}
+      </Static>
       <TextInput />
     </Box>
   );
