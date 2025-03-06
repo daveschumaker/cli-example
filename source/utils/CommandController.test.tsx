@@ -212,9 +212,23 @@ describe('CommandController', () => {
         .spyOn(apiProvider, 'setpreferredProvider')
         .mockImplementation(() => {});
 
+      // Create mock for onProviderChange callback
+      const mockProviderChange = vi.fn();
+      controller = new CommandController({
+        onOutput: mockOutput,
+        onClear: mockClear,
+        onProviderChange: mockProviderChange
+      });
+
       controller.processCommand(`/setprovider ${ApiProviderEnum.OPENAI}`);
 
+      // Check that API provider was updated
       expect(setProviderSpy).toHaveBeenCalledWith(ApiProviderEnum.OPENAI);
+      
+      // Check that onProviderChange callback was called
+      expect(mockProviderChange).toHaveBeenCalledWith(ApiProviderEnum.OPENAI);
+      
+      // Check output message
       expect(mockOutput).toHaveBeenCalledWith([
         `Preferred provider set to ${ApiProviderEnum.OPENAI}`
       ]);
