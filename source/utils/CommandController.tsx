@@ -3,11 +3,11 @@ import {
   setpreferredProvider,
   getAvailableProviders,
   getpreferredProvider,
-  ApiProviderEnum,
-  getModelManagerForProvider
+  getModelManagerForProvider,
+  ApiProviderEnum
 } from '../api/apiProvider.js';
 import { SlashCommands } from './constants.js';
-import { Mode } from '../context/ModeContext.js';
+import { Mode, getSelectedModel } from '../context/ModeContext.js';
 
 /**
  * Controller for managing slash commands and their interactions with the UI
@@ -17,6 +17,8 @@ export class CommandController {
   private onOutputCallback: (output: string[]) => void;
   private onClearCallback: () => void;
   private onModeChange?: (newMode: Mode) => void;
+  private onModelChange?: (newModel: string) => void;
+  private onProviderChange?: (newProvider: string) => void;
 
   /**
    * Create a new CommandController
@@ -29,12 +31,16 @@ export class CommandController {
       onOutput?: (output: string[]) => void;
       onClear?: () => void;
       onModeChange?: (newMode: Mode) => void;
+      onModelChange?: (newModel: string) => void;
+      onProviderChange?: (newProvider: string) => void;
     } = {}
   ) {
     this.commands = options.commands || [];
     this.onOutputCallback = options.onOutput || (() => {});
     this.onClearCallback = options.onClear || (() => {});
     this.onModeChange = options.onModeChange;
+    this.onModelChange = options.onModelChange;
+    this.onProviderChange = options.onProviderChange;
     // Register built-in commands
     this.registerBuiltInCommands();
   }
@@ -188,6 +194,12 @@ export class CommandController {
         const inputProvider = args.toLowerCase() as ApiProviderEnum;
         if (providers.includes(inputProvider)) {
           setpreferredProvider(inputProvider);
+          
+          // Update the ModeContext via callback
+          if (this.onProviderChange) {
+            this.onProviderChange(inputProvider);
+          }
+          
           this.showOutput([`Preferred provider set to ${inputProvider}`]);
         } else {
           this.showOutput([
@@ -206,76 +218,54 @@ export class CommandController {
       }
     });
 
-    // Model management commands abstracted for the current API provider
+    // Model management commands
     this.registerCommand({
       name: SlashCommands.LISTMODELS,
-      description: 'List available models for the current API provider',
-      handler: (_args: string) => {
-        const provider = getpreferredProvider();
-        const modelManager = getModelManagerForProvider(provider);
-        if (modelManager && typeof modelManager.listModels === 'function') {
-          modelManager
-            .listModels()
-            .then((models: string[]) => {
-              this.showOutput(['Available models:'].concat(models));
-            })
-            .catch((error: Error) => {
-              this.showOutput([`Error retrieving models: ${error.message}`]);
-            });
-        } else {
+      description: 'List available models for the current provider',
+      handler: async () => {
+        const currentProvider = getpreferredProvider();
+        const modelManager = getModelManagerForProvider(currentProvider);
+        
+        if (!modelManager) {
           this.showOutput([
-            `The current provider (${provider}) does not support model management.`
+            `The current provider (${currentProvider}) does not support model management.`
           ]);
+          return;
+        }
+        
+        try {
+          const models = await modelManager.listModels();
+          this.showOutput(['Available models:'].concat(models));
+        } catch (error) {
+          this.showOutput([`Error listing models: ${error}`]);
         }
       }
     });
 
+    // Model management commands using context
     this.registerCommand({
       name: SlashCommands.SETMODEL,
-      description:
-        'Set the current model for the current API provider. Usage: /setmodel modelKey',
+      description: 'Set the current model. Usage: /setmodel modelKey',
       handler: (_args: string) => {
         if (!_args) {
           this.showOutput(['Model key is required. Usage: /setmodel modelKey']);
           return;
         }
-        const provider = getpreferredProvider();
-        const modelManager = getModelManagerForProvider(provider);
-        if (
-          modelManager &&
-          typeof modelManager.setCurrentModel === 'function'
-        ) {
-          modelManager.setCurrentModel(_args);
-          this.showOutput([
-            `Current model set to ${_args} for provider ${provider}`
-          ]);
+        if (this.onModelChange) {
+          this.onModelChange(_args);
+          this.showOutput([`Current model set to ${_args}`]);
         } else {
-          this.showOutput([
-            `The current provider (${provider}) does not support model management.`
-          ]);
+          this.showOutput(['Model update callback not provided.']);
         }
       }
     });
 
     this.registerCommand({
       name: SlashCommands.CURRENTMODEL,
-      description: 'Show the current model for the current API provider',
+      description: 'Show the current model',
       handler: () => {
-        const provider = getpreferredProvider();
-        const modelManager = getModelManagerForProvider(provider);
-        if (
-          modelManager &&
-          typeof modelManager.getCurrentModel === 'function'
-        ) {
-          const current = modelManager.getCurrentModel();
-          this.showOutput([
-            `Current model for provider ${provider}: ${current}`
-          ]);
-        } else {
-          this.showOutput([
-            `The current provider (${provider}) does not support model management.`
-          ]);
-        }
+        const current = getSelectedModel();
+        this.showOutput([`Current model: ${current || 'none'}`]);
       }
     });
 

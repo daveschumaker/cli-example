@@ -8,6 +8,7 @@ import { CommandController } from '../utils/CommandController.js';
 import { ResponseText } from './ResponseText.js';
 import Spinner from './Spinner.js';
 import { sendApiRequest } from '../api/apiProvider.js';
+import ModeContext from '../context/ModeContext.js';
 
 export default function TextInput() {
   const {
@@ -36,6 +37,8 @@ export default function TextInput() {
   const [isLoading, setIsLoading] = useState(false);
   const { addToHistory, getPreviousEntry, getNextEntry } = useInputHistory();
 
+  const modeContext = React.useContext(ModeContext);
+
   const commandController = React.useMemo(() => {
     return new CommandController({
       onOutput: (output) => {
@@ -47,9 +50,18 @@ export default function TextInput() {
       },
       onClear: () => {
         setSubmissionHistory([]);
+      },
+      onModeChange: (newMode) => {
+        modeContext.setCurrentMode(newMode);
+      },
+      onModelChange: (newModel) => {
+        modeContext.setSelectedModel(newModel);
+      },
+      onProviderChange: (newProvider) => {
+        modeContext.setPreferredProvider(newProvider);
       }
     });
-  }, []);
+  }, [modeContext]);
 
   const { stdin, setRawMode } = useStdin();
 

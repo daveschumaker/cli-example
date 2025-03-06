@@ -12,6 +12,7 @@ import { SlashCommand } from '../hooks/useCommand.js';
 import * as apiProvider from '../api/apiProvider.js';
 import { ApiProviderEnum } from '../api/apiProvider.js';
 import { SlashCommands } from './constants.js';
+import * as ModeContext from '../context/ModeContext.js';
 
 describe('CommandController', () => {
   let controller: CommandController;
@@ -269,7 +270,6 @@ describe('CommandController', () => {
 
   describe('Model Management Commands', () => {
     const models = ['model1', 'model2'];
-    const currentModel = 'model1';
 
     // Setup mocks for model management
     beforeEach(() => {
@@ -280,10 +280,11 @@ describe('CommandController', () => {
 
       // Mock the model manager with Promise implementation
       const mockModelManager = {
-        sendRequest: vi.fn().mockImplementation((_: string) => Promise.resolve('Mock response')),
-        listModels: vi.fn().mockImplementation(() => Promise.resolve(models)),
-        setCurrentModel: vi.fn(),
-        getCurrentModel: vi.fn().mockReturnValue(currentModel)
+        sendRequest: vi
+          .fn()
+          .mockImplementation((_: string) => Promise.resolve('Mock response')),
+        listModels: vi.fn().mockImplementation(() => Promise.resolve(models))
+        // Note: setCurrentModel and getCurrentModel are no longer used from the model manager.
       };
 
       vi.spyOn(apiProvider, 'getModelManagerForProvider').mockReturnValue(
@@ -313,46 +314,57 @@ describe('CommandController', () => {
 
     test('should set current model via /setmodel command', () => {
       const modelToSet = 'gpt-4';
+      const onModelChange = vi.fn();
+      controller = new CommandController({
+        onOutput: mockOutput,
+        onClear: mockClear,
+        onModelChange
+      });
       controller.processCommand(`/setmodel ${modelToSet}`);
 
-      const modelManager = apiProvider.getModelManagerForProvider(
-        ApiProviderEnum.OPENAI
-      );
-      expect(modelManager?.setCurrentModel).toHaveBeenCalledWith(modelToSet);
+      expect(onModelChange).toHaveBeenCalledWith(modelToSet);
       expect(mockOutput).toHaveBeenCalledWith([
-        `Current model set to ${modelToSet} for provider ${ApiProviderEnum.OPENAI}`
+        `Current model set to ${modelToSet}`
       ]);
     });
 
     test('should show error for empty model name in /setmodel command', () => {
       controller.processCommand('/setmodel');
 
-      const modelManager = apiProvider.getModelManagerForProvider(
-        ApiProviderEnum.OPENAI
-      );
-      expect(modelManager?.setCurrentModel).not.toHaveBeenCalled();
       expect(mockOutput).toHaveBeenCalledWith([
         'Model key is required. Usage: /setmodel modelKey'
       ]);
     });
 
     test('should show current model via /currentmodel command', () => {
+      // Mock the getSelectedModel function directly
+      const mockSelectedModel = 'model1';
+      vi.spyOn(ModeContext, 'getSelectedModel').mockReturnValue(mockSelectedModel);
+      
       controller.processCommand('/currentmodel');
 
-      const modelManager = apiProvider.getModelManagerForProvider(
-        ApiProviderEnum.OPENAI
-      );
-      expect(modelManager?.getCurrentModel).toHaveBeenCalled();
       expect(mockOutput).toHaveBeenCalledWith([
-        `Current model for provider ${ApiProviderEnum.OPENAI}: ${currentModel}`
+        `Current model: ${mockSelectedModel}`
       ]);
     });
 
-    test('should show error when provider does not support model management', () => {
+    test('should show error when provider does not support model management', async () => {
       // Override the mock to return null (provider doesn't support model management)
       vi.spyOn(apiProvider, 'getModelManagerForProvider').mockReturnValue(null);
 
+      // Create a promise to wait for the async operation
+      const originalShowOutput = controller.showOutput;
+      const promise = new Promise<unknown>((resolve) => {
+        vi.spyOn(controller, 'showOutput').mockImplementation((output) => {
+          originalShowOutput.call(controller, output);
+          resolve(output);
+        });
+      });
+
       controller.processCommand('/listmodels');
+
+      // Wait for the async operation to complete
+      await promise;
 
       expect(mockOutput).toHaveBeenCalledWith([
         `The current provider (${ApiProviderEnum.OPENAI}) does not support model management.`

@@ -2,6 +2,7 @@ import React from 'react';
 import { Box, Text, Static } from 'ink';
 import TextInput from './components/TextInput.js';
 import { ModeProvider } from './context/ModeContext.js';
+import FooterInfo from './components/FooterInfo.js';
 
 export default function App() {
   return (
@@ -25,6 +26,7 @@ export default function App() {
           {(item) => item}
         </Static>
         <TextInput />
+        <FooterInfo />
       </Box>
     </ModeProvider>
   );

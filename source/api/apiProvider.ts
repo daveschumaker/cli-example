@@ -1,18 +1,11 @@
 import { sendOllamaRequest } from './ollama.js';
 import { sendClaudeRequest } from './claude.js';
-import {
-  sendLmStudioRequest,
-  listModels,
-  setCurrentModel,
-  getCurrentModel
-} from './lmstudio.js';
+import { sendLmStudioRequest, listModels } from './lmstudio.js';
 import { sendOpenAiRequest } from './openai.js';
 
 export const lmStudioManager = {
   sendRequest: sendLmStudioRequest,
-  listModels,
-  setCurrentModel,
-  getCurrentModel
+  listModels
 };
 
 export enum ApiProviderEnum {
