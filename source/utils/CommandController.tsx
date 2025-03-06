@@ -7,6 +7,7 @@ import {
   getModelManagerForProvider
 } from '../api/apiProvider.js';
 import { SlashCommands } from './constants.js';
+import { Mode } from '../context/ModeContext.js';
 
 /**
  * Controller for managing slash commands and their interactions with the UI
@@ -15,6 +16,7 @@ export class CommandController {
   private commands: SlashCommand[] = [];
   private onOutputCallback: (output: string[]) => void;
   private onClearCallback: () => void;
+  private onModeChange?: (newMode: Mode) => void;
 
   /**
    * Create a new CommandController
@@ -26,12 +28,13 @@ export class CommandController {
       commands?: SlashCommand[];
       onOutput?: (output: string[]) => void;
       onClear?: () => void;
+      onModeChange?: (newMode: Mode) => void;
     } = {}
   ) {
     this.commands = options.commands || [];
     this.onOutputCallback = options.onOutput || (() => {});
     this.onClearCallback = options.onClear || (() => {});
-
+    this.onModeChange = options.onModeChange;
     // Register built-in commands
     this.registerBuiltInCommands();
   }
@@ -142,7 +145,7 @@ export class CommandController {
   }
 
   /**
-   * Register built-in commands like help, clear, exit
+   * Register built-in commands like help, clear, exit, and setmode.
    */
   private registerBuiltInCommands(): void {
     // Help command
@@ -273,6 +276,36 @@ export class CommandController {
             `The current provider (${provider}) does not support model management.`
           ]);
         }
+      }
+    });
+
+    // Set mode command
+    this.registerCommand({
+      name: SlashCommands.SETMODE,
+      description:
+        'Change the application mode. Usage: /setmode [architect|chat|code]',
+      handler: (args: string) => {
+        if (!args) {
+          this.showOutput([
+            'Please specify a mode. Available modes: architect, chat, code'
+          ]);
+          return;
+        }
+        const modeArg = args.toLowerCase();
+        if (
+          modeArg !== 'architect' &&
+          modeArg !== 'chat' &&
+          modeArg !== 'code'
+        ) {
+          this.showOutput([
+            `Invalid mode: ${args}. Available modes: architect, chat, code`
+          ]);
+          return;
+        }
+        if (this.onModeChange) {
+          this.onModeChange(modeArg as Mode);
+        }
+        this.showOutput([`Application mode changed to ${modeArg}`]);
       }
     });
 

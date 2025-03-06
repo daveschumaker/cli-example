@@ -26,6 +26,7 @@ export enum SlashCommands {
   SETPROVIDER = 'setprovider',
   CURRENTPROVIDER = 'currentprovider',
   LISTMODELS = 'listmodels',
+  SETMODE = 'setmode',
   SETMODEL = 'setmodel',
   CURRENTMODEL = 'currentmodel',
   EXIT = 'exit'
