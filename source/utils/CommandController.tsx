@@ -6,7 +6,7 @@ import {
   ApiProviderEnum,
   getModelManagerForProvider
 } from '../api/apiProvider.js';
-import { SlashCommands, ValidCommands } from './constants.js';
+import { SlashCommands } from './constants.js';
 
 /**
  * Controller for managing slash commands and their interactions with the UI
@@ -43,8 +43,10 @@ export class CommandController {
   registerCommand(command: SlashCommand): void {
     // Ensure the command name is in the SlashCommands enum
     const commandValues = Object.values(SlashCommands);
-    const isValidCommand = commandValues.includes(command.name as SlashCommands);
-    
+    const isValidCommand = commandValues.includes(
+      command.name as SlashCommands
+    );
+
     if (!isValidCommand) {
       throw new Error(
         `Invalid command name: ${command.name}. Command name must be one of the SlashCommands enum values: ${commandValues.join(', ')}`
@@ -79,7 +81,7 @@ export class CommandController {
     if (!input) {
       return false;
     }
-    
+
     // Check if the input starts with a slash
     if (!input.trim().startsWith('/')) {
       return false;
